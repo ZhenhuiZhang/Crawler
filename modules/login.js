@@ -1,20 +1,14 @@
 const puppeteer = require('puppeteer');
 const config = require('../config')
 
-module.exports = async function login() {
+module.exports = async function login({page,broswer,website_id}) {
   // dom element selectors
   const USERNAME_SELECTOR = '#uid';
   const PASSWORD_SELECTOR = '#pwd';
   const BUTTON_SELECTOR = '#loginform > div > div.content-body > input.login-button';
 
-  const browser = await puppeteer.launch({
-    headless: false
-  });
-
-  const page = await browser.newPage();
   await page.goto(`${config.websiteUrl}${config.loginPage}`);
 
-  
   await page.click(USERNAME_SELECTOR);
   await page.type(config.username);
   
@@ -26,6 +20,6 @@ module.exports = async function login() {
   await page.waitForNavigation();
 
   // await page.waitFor(2*5000);
-  return {browser,page}
+  return true
   // browser.close();
 }

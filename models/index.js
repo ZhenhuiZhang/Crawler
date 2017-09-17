@@ -14,3 +14,6 @@ var sequelize = new Sequelize(config.database, config.username, config.password,
 exports.sequelize = sequelize;
 exports.Website = require('./website')(sequelize);
 exports.Currency = require('./currency')(sequelize);
+exports.Bank = require('./bank')(sequelize);
+exports.Web = require('./web')(sequelize);
+exports.Account = require('./account')(sequelize);
