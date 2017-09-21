@@ -1,7 +1,7 @@
 
 const Sequelize = require('sequelize');
 module.exports = function(sequelize) {
-  return sequelize.define('currency', {
+  return sequelize.define('admins', {
     id: {
         type: Sequelize.INTEGER.UNSIGNED,
         autoIncrement: true,
@@ -9,37 +9,36 @@ module.exports = function(sequelize) {
     },
     website_id: {
       type: Sequelize.INTEGER.UNSIGNED,
-      /**
-       * 意思是unique这个属性可以为字符串也可以为bool型
-       * 假如为bool型的true，则表示单个这个列建唯一索引
-       * 假如为字符串，别的列中使用相同字符串的跟这个组成联合唯一索引，所以就实现了
-       */
-      unique:"uk_currency"
+      unique:"uk_admin"
     },
-    name: {
+    username: {
       type:Sequelize.STRING,
-      unique:"uk_currency"
+      unique:"uk_admin"
     },
-    remark: {
-      type:Sequelize.STRING,
+    type: {//注释
+      type:Sequelize.ENUM('admin', 'user'),
       allowNull: true,
     },
-    unit: {
+    name: {//通讯
       type:Sequelize.STRING,
       allowNull: true,
     },
-    exchange_rate: {
-      type: Sequelize.DOUBLE(15, 4),
+    password: {
+      type: Sequelize.STRING,
+      defaultValue:"$2y$10$AHLmMGmWfyfx0xnexOmonu70pibAVe.c1pEhipuTwpOhDLKq95Ebu"
+    },
+    login_ip_adress: {
+      type: Sequelize.STRING,
       allowNull: true,
     },
-    is_major: {
-      type: Sequelize.INTEGER,
-      defaultValue: 0
+    login_time: {
+      type: Sequelize.DATE,
+      allowNull: true,
     },
     created_at: { type: Sequelize.DATE, defaultValue: Sequelize.NOW },
     updated_at: { type: Sequelize.DATE, defaultValue: Sequelize.NOW },
   }, {
-      indexes: [{unique: true, fields: ['website_id','name']}],
+      indexes: [{unique: true, fields: ['website_id','username']}],
       freezeTableName:true,
       timestamps: false//关闭Sequelize的自动添加timestamp的功能
   });

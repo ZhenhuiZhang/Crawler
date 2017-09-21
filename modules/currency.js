@@ -1,9 +1,8 @@
 const Currency = require('../models').Currency;
 const logger = require('../utils/logger').logger('currency');
-const config = require('../config')
 
 module.exports = { 
-  currency:async function({page,broswer,website_id}) {
+  currency:async function({page,broswer,website_id,config,transaction}) {
     // dom element selectors#search_form > table > tbody > tr:nth-child(1)
     const LIST_INFO_SELECTOR = '#search_form > table > tbody > tr';
     const NAME_SELECTOR = 'td:nth-child(4)';
@@ -29,9 +28,9 @@ module.exports = {
           const $major = $currencyListItem.querySelector(Major);// 备注
           return {
             name:$name.innerText,
-            remark:$remark ? $remark.innerText : null,
-            exchange_rate:$exchange_rate ? $exchange_rate.innerText : null,
-            unit:$unit ? $unit.innerText : null,
+            remark:$remark.innerText ? $remark.innerText : null,
+            exchange_rate:$exchange_rate.innerText ? $exchange_rate.innerText.replace(/,/g,'') : null,
+            unit:$unit.innerText ? $unit.innerText : null,
             is_major:$major.checked ? 1 : 0,
           };
         })
@@ -40,7 +39,7 @@ module.exports = {
     }, LIST_INFO_SELECTOR, NAME_SELECTOR,REMARK_SELECTOR,
     RATE_SELECTOR,UNIT_SELECTOR,MAJOR_SELECTOR);
 
-    let count = 0;
+    let count = 0,currencylist = [];
     for (let index = 0,length = currency.length; index < length; index++) {
       let item = await Currency.findOne({
         where: {
@@ -49,19 +48,19 @@ module.exports = {
         }
       });
       if(item){
-        item = await Currency.update(currency[index],{
+        await Currency.update(currency[index],{
           where: {
-            name:currency[index].name,
-            website_id:website_id
-          }
+            id:item.id
+          },
+          transaction: transaction
         })
       }else{
         item = await Currency.create({
           website_id:website_id,
           ...currency[index]
-        })
+        },{transaction: transaction})
       }
-      
+      currencylist.push(item.dataValues)
       //每50条打印一次，以防记录太多查看状态
       if((++count)%50==0){
         logger.debug(`Has Create currency:${count} row`)
@@ -70,6 +69,6 @@ module.exports = {
     //打印总记录数
     logger.info("crawler currency.php finish,TOTAL:",count)
     // await page.waitFor(2*5000);
-    return true;
+    return currencylist;
   }
 }

@@ -1,9 +1,8 @@
 const Bank = require('../models').Bank;
 const logger = require('../utils/logger').logger('bank');
-const config = require('../config')
 
 module.exports = { 
-  bank:async function({page,broswer,website_id}) {
+  bank:async function({page,broswer,website_id,config,transaction}) {
     // dom element selectors#search_form > table > tbody > tr:nth-child(1)
     const LIST_INFO_SELECTOR = '#search_form > table > tbody > tr';
     const NAME_SELECTOR = 'td:nth-child(4)';
@@ -23,14 +22,14 @@ module.exports = {
           const $remark = $bankListItem.querySelector(Remark);// 备注
           return {
             name:$name.innerText,
-            remark:$remark ? $remark.innerText : null,
+            remark:$remark.innerText ? $remark.innerText : null,
           };
         })
         // 过滤掉第一行
         .filter(u => !!u);
     }, LIST_INFO_SELECTOR, NAME_SELECTOR,REMARK_SELECTOR);
     
-    let count = 0;
+    let count = 0,banklist=[];
     for (let index = 0,length = bank.length; index < length; index++) {
       let item = await Bank.findOne({
         where: {
@@ -39,18 +38,19 @@ module.exports = {
         }
       });
       if(item){
-        item = await Bank.update(bank[index],{
+        await Bank.update(bank[index],{
           where: {
-            name:bank[index].name,
-            website_id:website_id
-          }
+            id:item.id
+          },
+          transaction: transaction
         })
       }else{
         item = await Bank.create({
           website_id:website_id,
           ...bank[index]
-        })
+        },{transaction: transaction})
       }
+      banklist.push(item.dataValues)
       //每50条打印一次，以防记录太多查看状态
       if((++count)%50==0){
         logger.debug(`Has Create bank:${count} row`)
@@ -58,6 +58,6 @@ module.exports = {
     }
     //打印总记录数
     logger.info("crawler bank.php finish,TOTAL:",count)
-    return true;
+    return banklist;
   }
 }

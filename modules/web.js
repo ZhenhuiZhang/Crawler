@@ -3,7 +3,7 @@ const logger = require('../utils/logger').logger('web');
 const config = require('../config')
 
 module.exports = { 
-  web:async function({page,broswer,website_id}) {
+  web:async function({page,broswer,website_id,config,transaction}) {
     // dom element selectors#search_form > table > tbody > tr:nth-child(1)
     const LIST_INFO_SELECTOR = '#search_form > table > tbody > tr';
     const NAME_SELECTOR = 'td:nth-child(4)';
@@ -29,10 +29,10 @@ module.exports = {
           const $remark= $webListItem.querySelector(Remark);// 备注
           return {
             name:$name.innerText,
-            cn_name:$cn_name ? $cn_name.innerText : null,
-            en_name:$en_name ? $en_name.innerText : null,
-            url:$url ? $url.innerText : null,
-            remark:$remark ? $remark.innerText : null,
+            cn_name:$cn_name.innerText ? $cn_name.innerText : '',
+            en_name:$en_name.innerText ? $en_name.innerText : '',
+            url:$url.innerText ? $url.innerText : null,
+            remark:$remark.innerText ? $remark.innerText : null,
           };
         })
         // 过滤掉第一行
@@ -51,21 +51,23 @@ module.exports = {
       if(item){
          await Web.update(web[index],{
           where: {
-            name:web[index].name,
-            website_id:website_id
-          }
+            id:item.id
+          },
+          transaction: transaction
         })
       }else{
         item = await Web.create({
           website_id:website_id,
           ...web[index]
-        })
+        },{transaction: transaction})
       }
       weblist.push(item.dataValues)
       //每50条打印一次，以防记录太多查看状态
       if((++count)%50==0){
         logger.debug(`Has Create web:${count} row`)
       }
+      //暂停一下
+      await page.waitFor(config.pageStop);
     }
     //打印总记录数
     // logger.info(weblist)
